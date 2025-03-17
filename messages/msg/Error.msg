@@ -1,4 +1,4 @@
 bool non_resetable
-int code 
+int32 code 
 string description
 string module 

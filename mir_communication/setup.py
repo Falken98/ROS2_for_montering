@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'MiR_communication'
+package_name = 'mir_communication'
 
 setup(
     name=package_name,

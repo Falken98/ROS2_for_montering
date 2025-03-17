@@ -1,4 +1,4 @@
-Header header
+std_msgs/Header header
 bool joysticl_low_speed_mode_enabled
 string mission_queue_url
 int32 mode_id
@@ -17,8 +17,8 @@ string map_id
 bool safety_system_muted
 string mission_text
 string state_text
-geometry_msgs/Twist2D velocity
-Footprint footprint
+Twist2D velocity
+string footprint
 UserPrompt user_prompt
 string allowed_methods
 string robot_model
