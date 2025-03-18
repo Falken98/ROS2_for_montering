@@ -1,20 +1,35 @@
 import rclpy
-from rclpy.node import Node
 import mir_api
-
+import json
+from rclpy.node import Node
+from messages.msg import MiRState
 
 class MirNode(Node):
-    def __init__(self, node_name):
-        super().__init__(node_name)
-        self.mir = mir_api.MirApi()
+    def __init__(self, node_name, ip='172.31.1.148'):
+        super().__init__('mir_node', ip='172.31.1.148')
+        self.mir = mir_api.MirApi(ip)
+        self.publisher = self.create_publisher(MiRState, 'MiRState', 10)
 
         self.get_logger().info('MirNode has been started')
-        self.create_timer(1.0, self.timer_callback)
+
+        self.publish_frequency = 1 # Hz
+        self.publish_period = 1.0 / self.publish_frequency
+        self.create_timer(self.publish_period, self.timer_callback)
 
 
     def timer_callback(self):
+        msg = MiRState()
         state = self.mir.get_state()
+        for item in state:
+            setattr(msg, item, state[item])
         
+        self.publisher.publish(msg)
+
+
+def JsonTopic(json_data, topic):
+    msg = json.dumps(topic)
+
+
 
 
 def main():

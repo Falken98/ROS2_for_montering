@@ -2,8 +2,8 @@ import requests
 import json
 
 class MiR_API:
-    def __init__(self):
-        self.ip = '172.31.1.148'
+    def __init__(self, ip):
+        self.ip = ip
         self.host = f"http://{self.ip}/api/v2.0.0/"
         self.headers = {}
         self.headers['Content-Type'] = 'application/json'
