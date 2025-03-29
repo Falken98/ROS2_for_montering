@@ -5,7 +5,7 @@
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="668128@stud.hvl.no">prosjekt</maintainer>
-  <license>MIT</license>
+  <license>TODO: License declaration</license>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
@@ -13,7 +13,7 @@
   <test_depend>python3-pytest</test_depend>
 
   <exec_depend>messages</exec_depend>
-
+  
   <export>
     <build_type>ament_python</build_type>
   </export>

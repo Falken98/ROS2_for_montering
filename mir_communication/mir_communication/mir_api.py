@@ -15,10 +15,11 @@ class MiR_API:
 
         try:
             url = self.host + url
-            response = requests.get(url, self.headers)
+            response = requests.get(url, headers=self.headers)
 
             if response.status_code == 200:
                 posts = response.json()
+                # print(posts)
                 return posts
             else:
                 print('Error:', response.status_code)
@@ -48,12 +49,12 @@ class MiR_API:
     def get_registers(self):
         pass
     
-    def post_append_mission(self):
+    def post_append_mission(self, mission):
         url = 'mission_queue'
-        mission = {'mission_id': '65a06dcb-2448-11ef-80fe-000129af97ab'}
+        mission_id = {'mission_id': mission} # '65a06dcb-2448-11ef-80fe-000129af97ab'
         try:
             url = self.host + url
-            response = requests.post(url, json=mission, headers=self.headers)
+            response = requests.post(url, json=mission_id, headers=self.headers)
             posts = response.json()
             if response.status_code == 201:
                 posts = response.json()

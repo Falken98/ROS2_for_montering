@@ -1,5 +1,5 @@
 std_msgs/Header header
-bool joysticl_low_speed_mode_enabled
+bool joystick_low_speed_mode_enabled
 string mission_queue_url
 int32 mode_id
 float64 moved 

@@ -24,8 +24,14 @@ set(msg_files
   "msg/Twist2D.msg"
 )
 
+set(srv_files
+  "srv/MirAppendMission.srv"
+  "srv/MirCancelMission.srv"
+)
+
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${msg_files}
+  ${srv_files}
   DEPENDENCIES builtin_interfaces geometry_msgs std_msgs
 )
 

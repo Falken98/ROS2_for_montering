@@ -1,0 +1,5 @@
+string mission_id
+---
+bool success
+int32 priority
+string response
