@@ -140,8 +140,8 @@ class RobotiqGripper:
         :param auto_calibrate: Whether to calibrate the minimum and maximum positions based on actual motion.
         """
         # clear and then reset ACT
-        self._set_var(self.STA, 0)
-        self._set_var(self.STA, 1)
+        self._set_vars({self.STA: 0})
+        self._set_vars({self.STA: 1})
 
         # wait for activation to go through
         while not self.is_active():
@@ -268,18 +268,18 @@ class RobotiqGripper:
         return final_pos, final_obj
 
     def send_command(self, command):
-        self.move(command.rPR, command.rSP, command.rFR)
+        self.move(command.r_pr, command.r_sp, command.r_fr)
 
     def get_status(self):
         message = InputMsg()
         # Assign the values to their respective variables
-        message.gACT = self._get_var(self.ACT)
-        message.gGTO = self._get_var(self.GTO)
-        message.gSTA = self._get_var(self.STA)
-        message.gOBJ = self._get_var(self.OBJ)
-        message.gFLT = self._get_var(self.FLT)
-        message.gPR = self._get_var(self.PRE)
-        message.gPO = self._get_var(self.POS)
+        message.g_act = self._get_var(self.ACT)
+        message.g_gto = self._get_var(self.GTO)
+        message.g_sta = self._get_var(self.STA)
+        message.g_obj = self._get_var(self.OBJ)
+        message.g_flt = self._get_var(self.FLT)
+        message.g_pr = self._get_var(self.PRE)
+        message.g_po = self._get_var(self.POS)
         # message.gCU  = self._get_var()  # current is not read by this package
         return message
 
@@ -289,7 +289,17 @@ class RobotiqGripperNode(Node):
         super().__init__('robotiq2FGripper')
         self.gripper = RobotiqGripper(robot_ip=device)
         self.gripper.connect()
+        
 
+        self.get_logger().info('Robotiq node has been started')
+        self.get_logger().info('Connecting to robot at {}'.format(device))
+
+        self.get_logger().info('Griper active status: {}'.format(self.gripper.is_active()))
+        if not self.gripper.is_active():
+            self.get_logger().info('Activating griper')
+            self.gripper.activate()
+        self.get_logger().info('Griper active status: {}'.format(self.gripper.is_active()))
+        
         # The Gripper status is published on the topic named 'Robotiq2FGripperRobotInput'
         self.pub = self.create_publisher(InputMsg, 'Robotiq2FGripperRobotInput', 10)
         self.pub_gripper = self.create_publisher(Int16, '/robotiq_grip_gap', 10)
@@ -302,14 +312,14 @@ class RobotiqGripperNode(Node):
     def timer_callback(self):
         status = self.gripper.get_status()
         self.pub.publish(status)
-        self.pub_gripper.publish(Int16(data=status.gPO))
+        self.pub_gripper.publish(Int16(data=status.g_po))
 
 
 def main(args=None):
     rclpy.init(args=args)
 
     device = sys.argv[1] if len(sys.argv) > 1 else '172.31.1.144'
-    node = RobotiqGripperNode('172.31.1.144')
+    node = RobotiqGripperNode(device)
 
     try:
         rclpy.spin(node)

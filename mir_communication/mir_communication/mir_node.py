@@ -81,7 +81,6 @@ class MirNode(Node):
 
         except Exception as e:
             self.get_logger().error(f"Error processing state: {e}")
-
         try:
             # self.get_logger().info(msg)
             self.state_publisher.publish(msg)

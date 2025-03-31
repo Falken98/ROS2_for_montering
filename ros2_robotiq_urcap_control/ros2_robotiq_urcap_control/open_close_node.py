@@ -9,17 +9,19 @@ class TestNode(Node):
         self.publisher = self.create_publisher(OutputMsg, 'Robotiq2FGripperRobotOutput', 10)
 
     def send_gripper_open_command(self):
+        self.get_logger().info('Sending open command')
         msg = OutputMsg()
-        msg.rPR = 0
-        msg.rSP = 127
-        msg.rFR = 127
+        msg.r_pr = 0
+        msg.r_sp = 127
+        msg.r_fr = 127
         self.publisher.publish(msg)
 
     def send_gripper_close_command(self):
+        self.get_logger().info('Sending close command')
         msg = OutputMsg()
-        msg.rPR = 255
-        msg.rSP = 127
-        msg.rFR = 127
+        msg.r_pr = 255
+        msg.r_sp = 127
+        msg.r_fr = 127
         self.publisher.publish(msg)
 
 def main(args=None):
@@ -27,17 +29,16 @@ def main(args=None):
 
     node = TestNode()
 
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        pass
+    # try:
+    #     rclpy.spin(node)
+    # except KeyboardInterrupt:
+    #     pass
 
-    #while not rclpy.shutdown():
-    node.send_gripper_close_command()
-    #time.sleep(2)
-    #node.send_gripper_open_command()
-    #time.sleep(2)
-
+    while rclpy.ok(): # not rclpy.shutdown():
+        node.send_gripper_close_command()
+        time.sleep(2)
+        node.send_gripper_open_command()
+        time.sleep(2)
 
     node.gripper.disconnect()
     node.destroy_node()
