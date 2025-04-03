@@ -140,8 +140,12 @@ class RobotiqGripper:
         :param auto_calibrate: Whether to calibrate the minimum and maximum positions based on actual motion.
         """
         # clear and then reset ACT
-        self._set_vars({self.STA: 0})
-        self._set_vars({self.STA: 1})
+        # rclpy.logging.get_logger('robotiq_urcap_ctrl_ros2').info('Gripper reset')
+        self._set_vars({self.ACT: 0})
+        # rclpy.logging.get_logger('robotiq_urcap_ctrl_ros2').info('Gripper restarting')
+        # rclpy.logging.get_logger('robotiq_urcap_ctrl_ros2').info(f"Griper status {self._get_var(self.STA)}")
+        self._set_vars({self.ACT: 1})
+        # rclpy.logging.get_logger('robotiq_urcap_ctrl_ros2').info(f"Griper status {self._get_var(self.STA)}")
 
         # wait for activation to go through
         while not self.is_active():
@@ -154,7 +158,7 @@ class RobotiqGripper:
     def is_active(self):
         """Returns whether the gripper is active."""
         status = self._get_var(self.STA)
-        return status == RobotiqGripper.GripperStatus.ACTIVE
+        return status == RobotiqGripper.GripperStatus.ACTIVE.value
 
     def get_min_position(self):
         """Returns the minimum position the gripper can reach (open position)."""
@@ -191,25 +195,25 @@ class RobotiqGripper:
         """
         # first try to open in case we are holding an object
         (position, status) = self.move_and_wait_for_pos(self.get_open_position(), 1, 1)
-        if status != RobotiqGripper.ObjectStatus.AT_DEST:
+        if status != RobotiqGripper.ObjectStatus.AT_DEST.value:
             raise RuntimeError("Calibration failed opening to start: " + str(status))
 
         # try to close as far as possible, and record the number
         (position, status) = self.move_and_wait_for_pos(self.get_closed_position(), 1, 1)
-        if status != RobotiqGripper.ObjectStatus.AT_DEST:
+        if status != RobotiqGripper.ObjectStatus.AT_DEST.value:
             raise RuntimeError("Calibration failed because of an object: " + str(status))
         assert position <= self._max_position
         self._max_position = position
 
         # try to open as far as possible, and record the number
         (position, status) = self.move_and_wait_for_pos(self.get_open_position(), 1, 1)
-        if status != RobotiqGripper.ObjectStatus.AT_DEST:
+        if status != RobotiqGripper.ObjectStatus.AT_DEST.value:
             raise RuntimeError("Calibration failed because of an object: " + str(status))
         assert position >= self._min_position
         self._min_position = position
 
         if log:
-            print(("Gripper auto-calibrated to " +
+            rclpy.logging.get_logger('robotiq_urcap_ctrl_ros2').info(("Gripper auto-calibrated to " +
                   str(self.get_min_position()) +
                   " " +
                   str(self.get_max_position())))
@@ -259,7 +263,7 @@ class RobotiqGripper:
 
         # wait until not moving
         cur_obj = self._get_var(self.OBJ)
-        while cur_obj == RobotiqGripper.ObjectStatus.MOVING:
+        while cur_obj == RobotiqGripper.ObjectStatus.MOVING.value:
             cur_obj = self._get_var(self.OBJ)
 
         # report the actual position and the object status
@@ -288,17 +292,15 @@ class RobotiqGripperNode(Node):
     def __init__(self, device):
         super().__init__('robotiq2FGripper')
         self.gripper = RobotiqGripper(robot_ip=device)
-        self.gripper.connect()
-        
-
         self.get_logger().info('Robotiq node has been started')
         self.get_logger().info('Connecting to robot at {}'.format(device))
-
+        self.gripper.connect()
+        
         self.get_logger().info('Griper active status: {}'.format(self.gripper.is_active()))
         if not self.gripper.is_active():
             self.get_logger().info('Activating griper')
             self.gripper.activate()
-        self.get_logger().info('Griper active status: {}'.format(self.gripper.is_active()))
+            self.get_logger().info('Griper active status: {}'.format(self.gripper.is_active()))
         
         # The Gripper status is published on the topic named 'Robotiq2FGripperRobotInput'
         self.pub = self.create_publisher(InputMsg, 'Robotiq2FGripperRobotInput', 10)
