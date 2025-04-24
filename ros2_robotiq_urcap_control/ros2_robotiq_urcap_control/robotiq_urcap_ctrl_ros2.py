@@ -2,6 +2,8 @@
 # BASED ON: https://dof.robotiq.com/discussion/1962/programming-options-ur16e-2f-85#latest
 # ROS/Python2 port by felixvd
 # Messing around, SID and Hand-E testing by MOJO
+# ROS2 port by Falken98
+# This file is part of the ros2_robotiq_urcap_control package.
 
 import socket
 import threading
