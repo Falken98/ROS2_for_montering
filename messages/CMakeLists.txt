@@ -29,9 +29,14 @@ set(srv_files
   "srv/MirCancelMission.srv"
 )
 
+set(action_files
+  "action/Test.action"
+)
+
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${msg_files}
   ${srv_files}
+  ${action_files}
   DEPENDENCIES builtin_interfaces geometry_msgs std_msgs
 )
 
