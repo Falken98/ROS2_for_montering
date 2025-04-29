@@ -1,0 +1,5 @@
+float64[] pose
+---
+string status
+---
+string partial_status
