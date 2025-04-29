@@ -31,11 +31,13 @@ set(srv_files
 
 set(action_files
   "action/Moveit.action"
+  "action/Test.action"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${msg_files}
   ${srv_files}
+  ${action_files}
   ${action_files}
   DEPENDENCIES builtin_interfaces geometry_msgs std_msgs
 )
