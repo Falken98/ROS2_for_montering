@@ -27,7 +27,7 @@ ament_target_dependencies(action_server
   "rclcpp_action"
   "rclcpp_components"
   "moveit_ros_planning_interface")
-rclcpp_components_register_node(action_server PLUGIN "custom_action_cpp::MoveItActionServer" EXECUTABLE fibonacci_action_server)
+rclcpp_components_register_node(action_server PLUGIN "move_it_ur5e::MoveItActionServer" EXECUTABLE moveit_action_server)
 install(TARGETS
   action_server
   ARCHIVE DESTINATION lib

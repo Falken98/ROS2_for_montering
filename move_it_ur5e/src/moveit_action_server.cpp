@@ -12,7 +12,7 @@
 
 namespace move_it_ur5e
 {
-class MoveItActionServer : public rclcpp::Node
+class MoveItActionServer : public rclcpp::Node//, public std::enable_shared_from_this<MoveItActionServer> 
 {
 public:
     using MoveItAction = messages::action::Moveit;
@@ -67,6 +67,12 @@ public:
     rclcpp_action::Server<MoveItAction>::SharedPtr action_server_;
 
     void execute(const std::shared_ptr<GoalHandleMoveItAction> goal_handle) {
+        // rclcpp::init();
+        // auto const node = make_shared<rclcpp::Node>(
+        //     "moveit_node",
+        //     rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true)
+        // );
+    
         RCLCPP_INFO(this->get_logger(), "Executing goal");
         rclcpp::Rate loop_rate(1);
         const auto goal = goal_handle->get_goal();
@@ -75,10 +81,11 @@ public:
         status.push_back(0);
         status.push_back(1);
         auto result = std::make_shared<MoveItAction::Result>();
-            
+        
+
         // Create the MoveIt MoveGroup Interface
         using moveit::planning_interface::MoveGroupInterface;
-        auto move_group_interface = MoveGroupInterface(this, "ur_manipulator");
+        auto move_group_interface = MoveGroupInterface(std::enable_shared_from_this<rclcpp::Node>::shared_from_this(), "ur_manipulator");
 
         // Set the target pose
         geometry_msgs::msg::Pose target_pose = [goal]{
@@ -89,25 +96,21 @@ public:
             msg.position.z = goal->pose[3];
             return msg;
         }();
-    
+        move_group_interface.setPoseTarget(target_pose);
 
+        // Create a plan to that target pose
+        auto const [success, plan] = [&move_group_interface]{
+            moveit::planning_interface::MoveGroupInterface::Plan msg;
+            auto const ok = static_cast<bool>(move_group_interface.plan(msg));
+            return std::make_pair(ok, msg);
+        }();
 
-        // for (int i = 1; (i < goal->pose) && rclcpp::ok(); ++i) {
-        //     // Check if there is a cancel request
-        //     if (goal_handle->is_canceling()) {
-        //         result->status = status;
-        //         goal_handle->canceled(result);
-        //         RCLCPP_INFO(this->get_logger(), "Goal canceled");
-        //         return;
-        //     }
-        //     // Update status
-        //     status.push_back(status[i] + status[i - 1]);
-        //     // Publish feedback
-        //     goal_handle->publish_feedback(feedback);
-        //     RCLCPP_INFO(this->get_logger(), "Publish feedback");
-        
-        //     loop_rate.sleep();
-        // }
+        // Execute the plan
+        if(success) {
+            move_group_interface.execute(plan);
+        } else {
+            RCLCPP_ERROR(this->get_logger(), "Planning failed!");
+        }
     
         // Check if goal is done
         if (rclcpp::ok()) {
@@ -116,5 +119,7 @@ public:
             RCLCPP_INFO(this->get_logger(), "Goal succeeded");
         }
     }; // void execute
-};
-}
+}; // class MoveItActionServer
+} // namespace move_it_ur5e
+
+RCLCPP_COMPONENTS_REGISTER_NODE(move_it_ur5e::MoveItActionServer);
