@@ -8,7 +8,7 @@ from messages.srv import MirAppendMission
 class MirNode(Node):
     def __init__(self):
         super().__init__('mir_node')
-        self.declare_parameter('ip', '192.168.1.1')
+        self.declare_parameter('ip', '172.31.1.148')
         ip = self.get_parameter('ip').get_parameter_value().string_value
         self.mir = mir_api(ip)
         self.state_publisher = self.create_publisher(MiRState, 'MiRState', 10)

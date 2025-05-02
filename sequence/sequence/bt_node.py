@@ -273,8 +273,8 @@ class BehaviorTreeNode(Node):
         open_gripper = OpenGripper("Open griper", self)
         close_gripper = CloseGripper("Close griper", self)
         # create the MiR send mission behavior
-        mir_mission_to_robot = MiRMission(self, "MiRMoveToRobot", "Insert_mission_id_here")
-        mir_mission_from_robot = MiRMission(self, "MiRMoveFromRobot", "Insert_mission_id_here")       
+        mir_mission_to_robot = MiRMission(self, "MiRMoveToRobot", "bc0d09ca-274c-11f0-82ff-000129af97ab")
+        mir_mission_from_robot = MiRMission(self, "MiRMoveFromRobot", "a563317e-da62-11ef-b29c-000129af97ab")
 
         # create a parallel node
         # self.parallel = py_trees.composites.Parallel(name="Parallel", policy=py_trees.common.ParallelPolicy.SuccessOnAll(), children=[open_gripper, mir_mission_from_robot])

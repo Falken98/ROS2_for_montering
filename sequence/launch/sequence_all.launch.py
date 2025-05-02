@@ -13,11 +13,11 @@ def generate_launch_description():
         name='bt_node',
         output='screen',
         parameters=[],
-        arguments=['--ros-args', '--log-level', 'debug']
+        arguments=['--ros-args']
     )
 
     griper_ip_arg = DeclareLaunchArgument(
-        'ip',
+        'griper_ip',
         default_value='172.31.1.144',
         description='The IP address of the robot'
     )
@@ -29,11 +29,11 @@ def generate_launch_description():
         name='robotiq_urcap_control_node',
         output='screen',
         parameters=[],
-        arguments=[LaunchConfiguration('ip'), '--ros-args', '--log-level'] # , 'debug']
+        arguments=[LaunchConfiguration('griper_ip'), '--ros-args'] # , '--log-level', 'debug']
     )
 
     mir_ip_arg = DeclareLaunchArgument(
-        'ip',
+        'mir_ip',
         default_value='172.31.1.148',
         description='The IP address of the MiR robot'
     )
@@ -44,8 +44,8 @@ def generate_launch_description():
         executable='mir_node',
         name='mir_communication_node',
         output='screen',
-        parameters=[{'ip': LaunchConfiguration('ip')}],
-        arguments=['--ros-args', '--log-level'] # , 'debug']
+        parameters=[{'ip': LaunchConfiguration('mir_ip')}],
+        arguments=['--ros-args'] # , '--log-level', 'debug']
     )
 
     # Add any other nodes you want to launch here
