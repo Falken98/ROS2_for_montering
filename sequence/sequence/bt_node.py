@@ -1,6 +1,7 @@
 import rclpy
 import rclpy.logging
 from rclpy.node import Node
+from rclpy.action import ActionClient
 import py_trees
 import py_trees_ros
 import behavior_tree
@@ -9,6 +10,7 @@ from messages.msg import MiRState
 from messages.srv import MirAppendMission
 from messages.msg import Robotiq2FGripperRobotInput as InputMsg
 from messages.msg import Robotiq2FGripperRobotOutput as OutputMsg
+from messages.action import Moveit
     
 class OpenGripper(py_trees.behaviour.Behaviour):
     def __init__(self, name, node) -> None:
@@ -192,7 +194,10 @@ class RobotMove(py_trees.behaviour.Behaviour):
     def __init__(self, name, node, position):
         super(RobotMove, self).__init__(name=name)
         self.node = node
-        self.robot_client = None
+        self.robot_action = None
+        self.position = position
+        self.running = False
+        self.finished = False
 
     def initialise(self):
         # Initialize the blackboard
@@ -201,16 +206,46 @@ class RobotMove(py_trees.behaviour.Behaviour):
             self.blackboard.register_key(key=key, access=py_trees.common.Access.READ)
         print(self.blackboard)
         # Initialize the robot client
-        self.node.get_logger().info("Initializing robot client")
-        self.robot_client = self.node.create_client(MirAppendMission, 'robot_move') # 'MiRAppendMission' is a placeholder, replace with the actual service name
-        # Wait for the service to be available
-        while not self.robot_client.wait_for_service(timeout_sec=1.0):
-            self.node.get_logger().info('Service not available, waiting...')
-        self.node.get_logger().info("Robot client initialized")
-    
+        self.node.get_logger().info("Initializing robot action client")
+        self.robot_action = ActionClient(self.node, Moveit, 'robot_moveit')
+        # Wait for the action to be available
+        self.robot_action.wait_for_server()
+        self.node.get_logger().info("Robot action client initialized")
+        # Create a message
+        pos_msg = Moveit.Goal()
+        pos_msg.pose = self.position
+        # Send the goal to the robot
+        self.node.get_logger().info("Sending goal to robot")
+        send_future = self.robot_action.send_goal_async(self.position)
+        send_future.add_done_callback(self.goal_response_callback)
+
+    def goal_response_callback(self, future):
+        # Callback for the goal response
+        goal_handle = future.result()
+        self.running = True
+        result_future = goal_handle.get_result_async()
+        result_future.add_done_callback(self.get_result_callback)
+        
+    def get_result_callback(self, future):
+        # Callback for the result
+        result = future.result()
+        self.finished = True
+        self.running = False
+
     def update(self) -> py_trees.common.Status:
         # Logic to move the robot
-        pass
+        if self.finished:
+            # If the robot has finished moving, return success
+            self.node.get_logger().info("Robot has finished moving")
+            return py_trees.common.Status.SUCCESS
+        elif self.running:
+            # If the robot is still moving, return running
+            self.node.get_logger().info("Robot is still moving")
+            return py_trees.common.Status.RUNNING
+        else:
+            # If the robot is not moving, return failure
+            self.node.get_logger().info("Robot is not moving")
+            # return py_trees.common.Status.FAILURE
     
     def terminate(self, new_status):
         pass
@@ -242,13 +277,13 @@ class BehaviorTreeNode(Node):
         mir_mission_from_robot = MiRMission(self, "MiRMoveFromRobot", "Insert_mission_id_here")       
 
         # create a parallel node
-        self.parallel = py_trees.composites.Parallel(name="Parallel", policy=py_trees.common.ParallelPolicy.SuccessOnAll(), children=[open_gripper, mir_mission_from_robot])
+        # self.parallel = py_trees.composites.Parallel(name="Parallel", policy=py_trees.common.ParallelPolicy.SuccessOnAll(), children=[open_gripper, mir_mission_from_robot])
         # # create a selector node
         # self.selector = py_trees.composites.Selector(name="Selector", memory=True)
         # # create a decorator node
         # self.decorator = py_trees.decorators.FailureIsRunning(name="Decorator")
         # Create a root node
-        self.root = py_trees.composites.Sequence(name="Root", memory=True)
+        self.root = py_trees.composites.Sequence(name="Root", memory=True, children=[mir_mission_to_robot, close_gripper, mir_mission_from_robot, open_gripper])
 
 
         # Build the behavior tree
@@ -256,7 +291,7 @@ class BehaviorTreeNode(Node):
         self.behaviour_tree = py_trees.trees.BehaviourTree(self.root) 
         # Set the root node as the behavior tree
         self.behaviour_tree.root = self.root
-        print(py_trees.display.unicode_tree(self.behaviour_tree, show_status=True))
+        print(py_trees.display.unicode_tree(self.behaviour_tree.root, show_status=True))
         print(py_trees.display.unicode_blackboard())
         print(self.blackboard)
         py_trees.display.render_dot_tree(self.root)
