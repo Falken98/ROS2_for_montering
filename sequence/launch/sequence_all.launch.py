@@ -34,7 +34,7 @@ def generate_launch_description():
 
     mir_ip_arg = DeclareLaunchArgument(
         'ip',
-        default_value='192.168.12.20',
+        default_value='172.31.1.148',
         description='The IP address of the MiR robot'
     )
 
