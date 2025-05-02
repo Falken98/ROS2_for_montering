@@ -48,6 +48,13 @@ def generate_launch_description():
         arguments=['--ros-args'] # , '--log-level', 'debug']
     )
 
+    moveit_node = Node(
+        package='move_it_ur5e',
+        namespace='',
+        executable='moveit_action_server',
+        name='moveit_ur5e_node'
+    )
+
     # Add any other nodes you want to launch here
 
 
@@ -56,6 +63,7 @@ def generate_launch_description():
         griper_ip_arg,
         gripper_node,
         mir_ip_arg,
-        mir_node
+        mir_node,
+        moveit_node
         # Add any other nodes you want to launch here
     ])
