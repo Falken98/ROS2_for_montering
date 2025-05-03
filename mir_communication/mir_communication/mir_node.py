@@ -17,7 +17,7 @@ class MirNode(Node):
         self.get_logger().info('MirNode has been started')
         self.get_logger().info('Connecting to MiR at {}'.format(ip))
 
-        self.publish_frequency = 1 # Hz
+        self.publish_frequency = 10 # Hz
         self.publish_period = 1.0 / self.publish_frequency
         self.create_timer(self.publish_period, self.timer_callback)
 

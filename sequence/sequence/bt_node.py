@@ -151,7 +151,7 @@ class MiRMission(py_trees.behaviour.Behaviour):
                         case 3:
                             # MiR is not executing a mission
                             self.node.get_logger().info("MiR is not executing a mission")
-                            return py_trees.common.Status.FAILURE
+                            return py_trees.common.Status.SUCCESS
                         case 4:
                             # MiR is paused
                             self.node.get_logger().info("MiR is paused")
@@ -217,7 +217,9 @@ class RobotMove(py_trees.behaviour.Behaviour):
         pos_msg.pose = self.position
         # Send the goal to the robot
         self.node.get_logger().info("Sending goal to robot")
-        send_future = self.robot_action.send_goal_async(self.position)
+        pos_msg = Moveit.Goal()
+        pos_msg.pose = self.position
+        send_future = self.robot_action.send_goal_async(pos_msg)
         send_future.add_done_callback(self.goal_response_callback)
         self.node.get_logger().info("Goal sendt to robot")
 
@@ -287,7 +289,8 @@ class BehaviorTreeNode(Node):
         # # create a decorator node
         # self.decorator = py_trees.decorators.FailureIsRunning(name="Decorator")
         # Create a root node
-        self.root = py_trees.composites.Sequence(name="Root", memory=True, children=[robot]) #[mir_mission_to_robot, close_gripper, mir_mission_from_robot, open_gripper])
+        # self.root = py_trees.composites.Sequence(name="Root", memory=True, children=[mir_mission_to_robot, close_gripper, mir_mission_from_robot, open_gripper])
+        self.root = py_trees.composites.Sequence(name="Root", memory=True, children=[mir_mission_from_robot, close_gripper, mir_mission_to_robot, open_gripper])
 
 
         # Build the behavior tree
@@ -306,14 +309,15 @@ class BehaviorTreeNode(Node):
     def tick(self):
         # This method is called to tick the behavior tree
         self.get_logger().info("Ticking the Behavior Tree")
-        print(py_trees.display.unicode_tree(self.root, show_status=True))
+        self.get_logger().info(py_trees.display.unicode_tree(self.root, show_status=True))
+        # print(py_trees.display.unicode_tree(self.root, show_status=True))
         self.behaviour_tree.tick()
 
     def mir_message_callback(self, msg):
         # Callback for MiR messages
-        self.get_logger().info(f"Received MiR message: {msg}")
+        # self.get_logger().info(f"Received MiR message: {msg}")
         # Update the blackboard with the new message
-        self.blackboard.mir.mir.state = msg.state                           # MiR state (0 = none, 1 = starting, 2 = shutting down, 3 = ready, 4 = pause, 5 = executing, 6 = aborted, 7 = completed, 8 = docked, 9 = docking, 10 = emergency stop, 11 = manual control, 12 = error)
+        self.blackboard.mir.state = msg.state_id                            # MiR state (0 = none, 1 = starting, 2 = shutting down, 3 = ready, 4 = pause, 5 = executing, 6 = aborted, 7 = completed, 8 = docked, 9 = docking, 10 = emergency stop, 11 = manual control, 12 = error)
         self.blackboard.mir.position.x = msg.position.x                     # MiR position x
         self.blackboard.mir.position.y = msg.position.y                     # MiR position y    
         self.blackboard.mir.position.w = msg.position.theta                 # MiR position w
@@ -323,7 +327,7 @@ class BehaviorTreeNode(Node):
 
     def gripper_message_callback(self, msg):
         # Callback for gripper messages
-        self.get_logger().info(f"Received gripper message: {msg}")
+        # self.get_logger().info(f"Received gripper message: {msg}")
         # Update the blackboard with the new message
         self.blackboard.griper.state = msg.g_sta        # gripper state (0 = is reset, 1 = activating, 3 = active)
         self.blackboard.griper.target = msg.g_pr        # gripper target (0 = open, 255 = closed)
