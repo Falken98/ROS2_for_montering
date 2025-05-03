@@ -12,7 +12,7 @@ class SendService(Node):
         self.req = MirAppendMission.Request()
 
     def send_request(self):
-        mission_id = '65a06dcb-2448-11ef-80fe-000129af97ab'
+        mission_id = 'bc0d09ca-274c-11f0-82ff-000129af97ab'
         self.req.mission_id = mission_id
         self.future = self.cli.call_async(self.req)
 
