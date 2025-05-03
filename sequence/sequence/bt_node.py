@@ -126,7 +126,7 @@ class MiRMission(py_trees.behaviour.Behaviour):
         print(self.blackboard)
         # Initialize the MiR client
         self.node.get_logger().info("Initializing MiR client")
-        self.mir_client = self.node.create_client(MirAppendMission, 'mir_append_mission')
+        self.mir_client = self.node.create_client(MirAppendMission, 'MiRAppendMission')
         # Wait for the service to be available
         while not self.mir_client.wait_for_service(timeout_sec=1.0):
             self.node.get_logger().info('Service not available, waiting...')
@@ -208,6 +208,7 @@ class RobotMove(py_trees.behaviour.Behaviour):
         # Initialize the robot client
         self.node.get_logger().info("Initializing robot action client")
         self.robot_action = ActionClient(self.node, Moveit, 'robot_moveit')
+        #self.robot_action = ActionClient(self.node, Moveit, 'move_it_action')
         # Wait for the action to be available
         self.robot_action.wait_for_server()
         self.node.get_logger().info("Robot action client initialized")
@@ -218,6 +219,8 @@ class RobotMove(py_trees.behaviour.Behaviour):
         self.node.get_logger().info("Sending goal to robot")
         send_future = self.robot_action.send_goal_async(self.position)
         send_future.add_done_callback(self.goal_response_callback)
+        self.node.get_logger().info("Goal sendt to robot")
+
 
     def goal_response_callback(self, future):
         # Callback for the goal response
@@ -270,11 +273,12 @@ class BehaviorTreeNode(Node):
         self.gripper_subscriber = self.create_subscription(InputMsg, 'Robotiq2FGripperRobotInput', self.gripper_message_callback, 10)
  
         # Create the gripper open and close behaviors
-        open_gripper = OpenGripper("Open griper", self)
-        close_gripper = CloseGripper("Close griper", self)
-        # create the MiR send mission behavior
-        mir_mission_to_robot = MiRMission(self, "MiRMoveToRobot", "bc0d09ca-274c-11f0-82ff-000129af97ab")
-        mir_mission_from_robot = MiRMission(self, "MiRMoveFromRobot", "a563317e-da62-11ef-b29c-000129af97ab")
+        # open_gripper = OpenGripper("Open griper", self)
+        # close_gripper = CloseGripper("Close griper", self)
+        # # create the MiR send mission behavior
+        # mir_mission_to_robot = MiRMission(self, "MiRMoveToRobot", "bc0d09ca-274c-11f0-82ff-000129af97ab")
+        # mir_mission_from_robot = MiRMission(self, "MiRMoveFromRobot", "a563317e-da62-11ef-b29c-000129af97ab")
+        robot = RobotMove('robot', self, [1, 1, 1, 1])
 
         # create a parallel node
         # self.parallel = py_trees.composites.Parallel(name="Parallel", policy=py_trees.common.ParallelPolicy.SuccessOnAll(), children=[open_gripper, mir_mission_from_robot])
@@ -283,7 +287,7 @@ class BehaviorTreeNode(Node):
         # # create a decorator node
         # self.decorator = py_trees.decorators.FailureIsRunning(name="Decorator")
         # Create a root node
-        self.root = py_trees.composites.Sequence(name="Root", memory=True, children=[mir_mission_to_robot, close_gripper, mir_mission_from_robot, open_gripper])
+        self.root = py_trees.composites.Sequence(name="Root", memory=True, children=[robot]) #[mir_mission_to_robot, close_gripper, mir_mission_from_robot, open_gripper])
 
 
         # Build the behavior tree

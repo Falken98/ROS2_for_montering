@@ -14,7 +14,7 @@ namespace move_it_ur5e
 {
 class MoveItActionServer : public rclcpp::Node//, public std::enable_shared_from_this<MoveItActionServer> 
 {
-public:
+    public:
     using MoveItAction = messages::action::Moveit;
     using GoalHandleMoveItAction = rclcpp_action::ServerGoalHandle<MoveItAction>;
 
@@ -56,7 +56,8 @@ public:
 
         this->action_server_ = rclcpp_action::create_server<MoveItAction>(
             this,
-            "move_it_action",
+            // "move_it_action",
+            "robot_moveit",
             handle_goal,
             handle_cancel,
             handle_accepted
