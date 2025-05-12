@@ -280,7 +280,6 @@ class RobotMove(py_trees.behaviour.Behaviour):
         goal_handle = future.result()
         if goal_handle.accepted:
             self.node.get_logger().debug("Goal accepted :)")
-            self.running = True
             result_future = goal_handle.get_result_async()
             result_future.add_done_callback(self.get_result_callback)
         else:
@@ -304,14 +303,14 @@ class RobotMove(py_trees.behaviour.Behaviour):
             # If the robot has finished moving, return success
             self.node.get_logger().info("Robot has finished moving")
             return py_trees.common.Status.SUCCESS
-        elif self.running:
-            # If the robot is still moving, return running
-            self.node.get_logger().info("Robot is still moving")
-            return py_trees.common.Status.RUNNING
         elif self.failure:
             # If the robot has failed to move, return failure
             self.node.get_logger().info("Robot failed to move")
             return py_trees.common.Status.FAILURE
+        elif self.running:
+            # If the robot is still moving, return running
+            self.node.get_logger().info("Robot is still moving")
+            return py_trees.common.Status.RUNNING
         else:
             # If the robot is not moving, return failure
             self.node.get_logger().info("Robot is not moving")
@@ -340,27 +339,28 @@ class BehaviorTreeNode(Node):
         self.gripper_subscriber = self.create_subscription(InputMsg, 'Robotiq2FGripperRobotInput', self.gripper_message_callback, 10)
  
         # Create the gripper open and close behaviors
-        open_gripper = OpenGripper("Open griper", self)
-        close_gripper = CloseGripper("Close griper", self)
-        # create the MiR send mission behavior
-        mir_mission_to_robot = MiRMission(self, "MiRMoveToRobot", "bc0d09ca-274c-11f0-82ff-000129af97ab")
-        mir_mission_from_robot = MiRMission(self, "MiRMoveFromRobot", "a563317e-da62-11ef-b29c-000129af97ab")
+        # open_gripper = OpenGripper("Open griper", self)
+        # close_gripper = CloseGripper("Close griper", self)
+        # # create the MiR send mission behavior
+        # mir_mission_to_robot = MiRMission(self, "MiRMoveToRobot", "bc0d09ca-274c-11f0-82ff-000129af97ab")
+        # mir_mission_from_robot = MiRMission(self, "MiRMoveFromRobot", "a563317e-da62-11ef-b29c-000129af97ab")
         # create the robot move behaviors
-        robot_to_mir_pos = RobotMove('Robot move over MiR', self, [1, 1, 1, 1])
-        robot_close_grip_pos = RobotMove('Robot grip position', self, [1, 1, 1, 1])
-        robot_home_pos = RobotMove('Robot home position', self, [1, 1, 1, 1])
-        robot_from_mir_pos = RobotMove('Robot move from MiR', self, [1, 1, 1, 1])
-        robot_to_pipe_pos = RobotMove('Robot move to pipe', self, [1, 1, 1, 1])
-        robot_open_grip_pos = RobotMove('Robot open gripper position', self, [1, 1, 1, 1])
+        robot_to_mir_pos = RobotMove('Robot move over MiR', self, trajectories.TRAJECTORIES['to_mir_pos'])
+        robot_close_grip_pos = RobotMove('Robot grip position', self, trajectories.TRAJECTORIES['to_grip_close_pos'])
+        robot_from_mir_pos = RobotMove('Robot move from MiR', self, trajectories.TRAJECTORIES['from_mir_pos'])
+        robot_to_pipe_pos = RobotMove('Robot move to pipe', self, trajectories.TRAJECTORIES['to_pipe_pos'])
+        robot_open_grip_pos = RobotMove('Robot open gripper position', self, trajectories.TRAJECTORIES['to_grip_open_pos'])
+        robot_home_pos = RobotMove('Robot home position', self, trajectories.TRAJECTORIES['from_pipe_pos'])
+
         robot_test1_move = RobotMove('Robot test move', self, trajectories.TRAJECTORIES['test1'])
         robot_test2_move = RobotMove('Robot test move', self, trajectories.TRAJECTORIES['test2'])
 
         # create a sequence node
-        self.sequence_place_pipe = py_trees.composites.Sequence(name="Sequence place pipe", memory=True, children=[robot_to_pipe_pos, robot_open_grip_pos, open_gripper, robot_home_pos])
-        self.sequence_pick_pipe = py_trees.composites.Sequence(name="Sequence pick pipe", memory=True, children=[robot_close_grip_pos, close_gripper, robot_from_mir_pos])
-        # create a parallel node
-        self.parallel_mir_to_pos = py_trees.composites.Parallel(name="Parallel get mir", policy=py_trees.common.ParallelPolicy.SuccessOnAll(), children=[mir_mission_to_robot, robot_to_mir_pos])
-        self.parallel_mir_from_pos = py_trees.composites.Parallel(name="Parallel remove mir", policy=py_trees.common.ParallelPolicy.SuccessOnAll(), children=[mir_mission_from_robot, self.sequence_place_pipe])
+        # self.sequence_place_pipe = py_trees.composites.Sequence(name="Sequence place pipe", memory=True, children=[robot_to_pipe_pos, robot_open_grip_pos, open_gripper, robot_home_pos])
+        # self.sequence_pick_pipe = py_trees.composites.Sequence(name="Sequence pick pipe", memory=True, children=[robot_close_grip_pos, close_gripper, robot_from_mir_pos])
+        # # create a parallel node
+        # self.parallel_mir_to_pos = py_trees.composites.Parallel(name="Parallel get mir", policy=py_trees.common.ParallelPolicy.SuccessOnAll(), children=[mir_mission_to_robot, robot_to_mir_pos])
+        # self.parallel_mir_from_pos = py_trees.composites.Parallel(name="Parallel remove mir", policy=py_trees.common.ParallelPolicy.SuccessOnAll(), children=[mir_mission_from_robot, self.sequence_place_pipe])
         # # create a selector node
         # self.selector = py_trees.composites.Selector(name="Selector", memory=True)
         # # create a decorator node
@@ -369,7 +369,7 @@ class BehaviorTreeNode(Node):
         # self.root = py_trees.composites.Sequence(name="Root", memory=True, children=[mir_mission_to_robot, close_gripper, mir_mission_from_robot, open_gripper])
         # self.root = py_trees.composites.Sequence(name="Root", memory=True, children=[mir_mission_from_robot, close_gripper, mir_mission_to_robot, open_gripper])
         # self.root = py_trees.composites.Sequence(name="Root", memory=True, children=[self.parallel_mir_to_pos, self.sequence_pick_pipe, self.parallel_mir_from_pos])
-        self.root = py_trees.composites.Sequence(name="Root", memory=True, children=[robot_test1_move, robot_test2_move])
+        self.root = py_trees.composites.Sequence(name="Root", memory=True, children=[robot_test1_move, robot_to_mir_pos, robot_close_grip_pos, robot_from_mir_pos, robot_to_pipe_pos, robot_open_grip_pos, robot_home_pos])
 
 
         # Build the behavior tree

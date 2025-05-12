@@ -7,11 +7,11 @@ from launch.substitutions import LaunchConfiguration, TextSubstitution
 from moveit_configs_utils import MoveItConfigsBuilder
 
 def generate_launch_description():
-    moveit_config = (
-        MoveItConfigsBuilder(robot_name="ur", package_name="ur_moveit_config")
-        .robot_description_semantic(Path("srdf") / "ur.srdf.xacro", {"name": 'ur5e'})
-        .to_moveit_configs()
-    )
+    # moveit_config = (
+    #     MoveItConfigsBuilder(robot_name="ur", package_name="ur_moveit_config")
+    #     .robot_description_semantic(Path("srdf") / "ur.srdf.xacro", {"name": 'ur5e'})
+    #     .to_moveit_configs()
+    # )
 
     sequence_node = Node(
         package='sequence',
@@ -20,23 +20,23 @@ def generate_launch_description():
         name='bt_node',
         output='screen',
         parameters=[
-            moveit_config.robot_description,
-            moveit_config.robot_description_semantic,
-            moveit_config.robot_description_kinematics,
-            moveit_config.planning_pipelines,
-            moveit_config.joint_limits,
+            # moveit_config.robot_description,
+            # moveit_config.robot_description_semantic,
+            # moveit_config.robot_description_kinematics,
+            # moveit_config.planning_pipelines,
+            # moveit_config.joint_limits,
         ],
         arguments=['--ros-args']
     )
 
-    move_group_node = Node(
-        package="moveit_ros_move_group",
-        executable="move_group",
-        output="screen",
-        parameters=[
-            moveit_config.to_dict(),
-        ],
-    )
+    # move_group_node = Node(
+    #     package="moveit_ros_move_group",
+    #     executable="move_group",
+    #     output="screen",
+    #     parameters=[
+    #         moveit_config.to_dict(),
+    #     ],
+    # )
 
     griper_ip_arg = DeclareLaunchArgument(
         'griper_ip',
@@ -70,12 +70,12 @@ def generate_launch_description():
         arguments=['--ros-args'] # , '--log-level', 'debug']
     )
 
-    moveit_node = Node(
-        package='move_it_ur5e',
-        namespace='',
-        executable='moveit_action_server',
-        name='moveit_ur5e_node'
-    )
+    # moveit_node = Node(
+    #     package='move_it_ur5e',
+    #     namespace='',
+    #     executable='moveit_action_server',
+    #     name='moveit_ur5e_node'
+    # )
 
     # Add any other nodes you want to launch here
 
@@ -86,6 +86,6 @@ def generate_launch_description():
         gripper_node,
         mir_ip_arg,
         mir_node,
-        move_group_node
+        # move_group_node
         # Add any other nodes you want to launch here
     ])
