@@ -4,13 +4,19 @@ from rclpy.node import Node
 from rclpy.action import ActionClient
 import py_trees
 import py_trees_ros
-import behavior_tree
 import time
+
 from messages.msg import MiRState
 from messages.srv import MirAppendMission
 from messages.msg import Robotiq2FGripperRobotInput as InputMsg
 from messages.msg import Robotiq2FGripperRobotOutput as OutputMsg
-from messages.action import Moveit
+
+import trajectories
+from builtin_interfaces.msg import Duration
+from action_msgs.msg import GoalStatus
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from control_msgs.action import FollowJointTrajectory
+from control_msgs.msg import JointTolerance
     
 class OpenGripper(py_trees.behaviour.Behaviour):
     def __init__(self, name, node) -> None:
@@ -191,12 +197,39 @@ class MiRMission(py_trees.behaviour.Behaviour):
         pass
 
 class RobotMove(py_trees.behaviour.Behaviour):
-    def __init__(self, name, node, position):
+    def __init__(self, name, node, trajectory):
         super(RobotMove, self).__init__(name=name)
+        # self.declare_parameter("controller_name", "scaled_joint_trajectory_controller")
+        # self.declare_parameter(
+        #     "joints",
+        #     [
+        #         "shoulder_pan_joint",
+        #         "shoulder_lift_joint",
+        #         "elbow_joint",
+        #         "wrist_1_joint",
+        #         "wrist_2_joint",
+        #         "wrist_3_joint",
+        #     ],
+        # )
+
+        # self.controller_name = self.get_parameter("controller_name").value + "/follow_joint_trajectory"
+        # self.joints = self.get_parameter("joints").value
+
+        self.controller_name = "scaled_joint_trajectory_controller/follow_joint_trajectory"
+        self.joints = [
+            "shoulder_pan_joint",
+            "shoulder_lift_joint",
+            "elbow_joint",
+            "wrist_1_joint",
+            "wrist_2_joint",
+            "wrist_3_joint",
+        ]
+
         self.node = node
         self.robot_action = None
-        self.position = position
+        self.trajectory = trajectory
         self.running = False
+        self.failure = False
         self.finished = False
 
     def initialise(self):
@@ -205,37 +238,64 @@ class RobotMove(py_trees.behaviour.Behaviour):
         for key in ['/mir/state', '/mir/position/x', '/mir/position/y', '/mir/position/w', '/mir/velocity/linear', '/mir/velocity/angular', '/mir/battery_percentage', '/griper/state', '/griper/target', '/griper/position', '/griper/moving']:
             self.blackboard.register_key(key=key, access=py_trees.common.Access.READ)
         print(self.blackboard)
+
         # Initialize the robot client
         self.node.get_logger().info("Initializing robot action client")
-        self.robot_action = ActionClient(self.node, Moveit, 'robot_moveit')
-        #self.robot_action = ActionClient(self.node, Moveit, 'move_it_action')
+        self.robot_action = ActionClient(self.node, FollowJointTrajectory, self.controller_name)
+        self.node.get_logger().info(f"Waiting for action server on {self.controller_name}")
+
         # Wait for the action to be available
         self.robot_action.wait_for_server()
         self.node.get_logger().info("Robot action client initialized")
+
         # Create a message
-        pos_msg = Moveit.Goal()
-        pos_msg.pose = self.position
+        trajectory = JointTrajectory()
+        trajectory.joint_names = self.joints
+        for pt in self.trajectory:
+            # Create a trajectory point
+            point = JointTrajectoryPoint()
+            point.positions = pt["positions"]
+            point.velocities = pt["velocities"]
+            point.time_from_start = pt["time_from_start"]
+            trajectory.points.append(point)
+
         # Send the goal to the robot
         self.node.get_logger().info("Sending goal to robot")
-        pos_msg = Moveit.Goal()
-        pos_msg.pose = self.position
-        send_future = self.robot_action.send_goal_async(pos_msg)
+        goal = FollowJointTrajectory.Goal()
+        goal.trajectory = trajectory
+        goal.goal_time_tolerance = Duration(sec=0, nanosec=500000000)
+        goal.goal_tolerance = [
+            JointTolerance(position=0.01, velocity=0.01, name=self.joints[i]) for i in range(6)
+        ]
+        send_future = self.robot_action.send_goal_async(goal)
         send_future.add_done_callback(self.goal_response_callback)
         self.node.get_logger().info("Goal sendt to robot")
+        self.running = True
+        self.finished = False
+        self.failure = False
 
 
     def goal_response_callback(self, future):
         # Callback for the goal response
         goal_handle = future.result()
-        self.running = True
-        result_future = goal_handle.get_result_async()
-        result_future.add_done_callback(self.get_result_callback)
+        if goal_handle.accepted:
+            self.node.get_logger().debug("Goal accepted :)")
+            result_future = goal_handle.get_result_async()
+            result_future.add_done_callback(self.get_result_callback)
+        else:
+            self.node.get_logger().error("Goal rejected :(")
+            self.failure = True
+
         
     def get_result_callback(self, future):
         # Callback for the result
-        result = future.result()
-        self.finished = True
-        self.running = False
+        result = future.result().result
+        status = future.result().status
+        if status == GoalStatus.STATUS_SUCCEEDED:
+            self.finished = True
+            self.running = False
+        else:
+            self.failure = True
 
     def update(self) -> py_trees.common.Status:
         # Logic to move the robot
@@ -243,6 +303,10 @@ class RobotMove(py_trees.behaviour.Behaviour):
             # If the robot has finished moving, return success
             self.node.get_logger().info("Robot has finished moving")
             return py_trees.common.Status.SUCCESS
+        elif self.failure:
+            # If the robot has failed to move, return failure
+            self.node.get_logger().info("Robot failed to move")
+            return py_trees.common.Status.FAILURE
         elif self.running:
             # If the robot is still moving, return running
             self.node.get_logger().info("Robot is still moving")
@@ -280,17 +344,32 @@ class BehaviorTreeNode(Node):
         # # create the MiR send mission behavior
         # mir_mission_to_robot = MiRMission(self, "MiRMoveToRobot", "bc0d09ca-274c-11f0-82ff-000129af97ab")
         # mir_mission_from_robot = MiRMission(self, "MiRMoveFromRobot", "a563317e-da62-11ef-b29c-000129af97ab")
-        robot = RobotMove('robot', self, [1, 1, 1, 1])
+        # create the robot move behaviors
+        robot_to_mir_pos = RobotMove('Robot move over MiR', self, trajectories.TRAJECTORIES['to_mir_pos'])
+        robot_close_grip_pos = RobotMove('Robot grip position', self, trajectories.TRAJECTORIES['to_grip_close_pos'])
+        robot_from_mir_pos = RobotMove('Robot move from MiR', self, trajectories.TRAJECTORIES['from_mir_pos'])
+        robot_to_pipe_pos = RobotMove('Robot move to pipe', self, trajectories.TRAJECTORIES['to_pipe_pos'])
+        robot_open_grip_pos = RobotMove('Robot open gripper position', self, trajectories.TRAJECTORIES['to_grip_open_pos'])
+        robot_home_pos = RobotMove('Robot home position', self, trajectories.TRAJECTORIES['from_pipe_pos'])
 
-        # create a parallel node
-        # self.parallel = py_trees.composites.Parallel(name="Parallel", policy=py_trees.common.ParallelPolicy.SuccessOnAll(), children=[open_gripper, mir_mission_from_robot])
+        robot_test1_move = RobotMove('Robot test move', self, trajectories.TRAJECTORIES['test1'])
+        robot_test2_move = RobotMove('Robot test move', self, trajectories.TRAJECTORIES['test2'])
+
+        # create a sequence node
+        # self.sequence_place_pipe = py_trees.composites.Sequence(name="Sequence place pipe", memory=True, children=[robot_to_pipe_pos, robot_open_grip_pos, open_gripper, robot_home_pos])
+        # self.sequence_pick_pipe = py_trees.composites.Sequence(name="Sequence pick pipe", memory=True, children=[robot_close_grip_pos, close_gripper, robot_from_mir_pos])
+        # # create a parallel node
+        # self.parallel_mir_to_pos = py_trees.composites.Parallel(name="Parallel get mir", policy=py_trees.common.ParallelPolicy.SuccessOnAll(), children=[mir_mission_to_robot, robot_to_mir_pos])
+        # self.parallel_mir_from_pos = py_trees.composites.Parallel(name="Parallel remove mir", policy=py_trees.common.ParallelPolicy.SuccessOnAll(), children=[mir_mission_from_robot, self.sequence_place_pipe])
         # # create a selector node
         # self.selector = py_trees.composites.Selector(name="Selector", memory=True)
         # # create a decorator node
         # self.decorator = py_trees.decorators.FailureIsRunning(name="Decorator")
         # Create a root node
         # self.root = py_trees.composites.Sequence(name="Root", memory=True, children=[mir_mission_to_robot, close_gripper, mir_mission_from_robot, open_gripper])
-        self.root = py_trees.composites.Sequence(name="Root", memory=True, children=[mir_mission_from_robot, close_gripper, mir_mission_to_robot, open_gripper])
+        # self.root = py_trees.composites.Sequence(name="Root", memory=True, children=[mir_mission_from_robot, close_gripper, mir_mission_to_robot, open_gripper])
+        # self.root = py_trees.composites.Sequence(name="Root", memory=True, children=[self.parallel_mir_to_pos, self.sequence_pick_pipe, self.parallel_mir_from_pos])
+        self.root = py_trees.composites.Sequence(name="Root", memory=True, children=[robot_test1_move, robot_to_mir_pos, robot_close_grip_pos, robot_from_mir_pos, robot_to_pipe_pos, robot_open_grip_pos, robot_home_pos])
 
 
         # Build the behavior tree
