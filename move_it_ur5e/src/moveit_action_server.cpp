@@ -9,6 +9,7 @@
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
 #include "moveit/move_group_interface/move_group_interface.hpp"
+#include "std_msgs/msg/string.hpp"
 
 namespace move_it_ur5e
 {
@@ -23,6 +24,7 @@ class MoveItActionServer : public rclcpp::Node//, public std::enable_shared_from
     : Node("move_it_action_server", options)
     {
         using namespace std::placeholders;
+        RCLCPP_INFO(this->get_logger(), "MoveItActionServer node has been started");
 
         auto handle_goal = [this](
         const rclcpp_action::GoalUUID & uuid,
@@ -79,8 +81,6 @@ class MoveItActionServer : public rclcpp::Node//, public std::enable_shared_from
         const auto goal = goal_handle->get_goal();
         auto feedback = std::make_shared<MoveItAction::Feedback>();
         auto & status = feedback->partial_status;
-        status.push_back(0);
-        status.push_back(1);
         auto result = std::make_shared<MoveItAction::Result>();
         
 
@@ -115,7 +115,7 @@ class MoveItActionServer : public rclcpp::Node//, public std::enable_shared_from
     
         // Check if goal is done
         if (rclcpp::ok()) {
-            result->status = status;
+            result->status = "Completed";
             goal_handle->succeed(result);
             RCLCPP_INFO(this->get_logger(), "Goal succeeded");
         }
