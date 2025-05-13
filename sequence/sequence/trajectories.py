@@ -1,12 +1,15 @@
 from builtin_interfaces.msg import Duration
+import math
 
+def deg_to_rad(degrees):
+    return degrees * (math.pi / 180.0)
 
 POSITIONS = {
     'home': [0.96866, -1.84237, 1.65405, -1.38090, -1.56853, -0.0],
-    'over_mir': [0.09983, -0.34348, 1.24564, -2.47278, -1.56800, 0.31119],
-    'over_pipe': [1.35961, -1.17931, 1.37183, -1.76366, -1.57004, 1.56975],
-    'pipe_grip': [0.09721, -0.22218, 1.17042, -2.51868, -1.56800, 0.31119],
-    'pipe_release': [1.35944, -1.06029, 1.58441, -2.09509, -1.56888, -1.57045],
+    'over_mir': [0.36634, -0.57037, 1.26938, -2.26788, -1.56905, -1.20951],
+    'over_pipe': [deg_to_rad(64.46), deg_to_rad(-66.17), deg_to_rad(71.15), deg_to_rad(-97.82), deg_to_rad(-88.56), deg_to_rad(-28.18)],
+    'pipe_grip': [0.36634, -0.51417, 1.26048, -2.31588, -1.56923, -1.20934],
+    'pipe_release': [deg_to_rad(65.46), deg_to_rad(-65.56), deg_to_rad(75.25), deg_to_rad(-102.53), deg_to_rad(-88.75), deg_to_rad(-28.18)],
 }
 
 TRAJECTORIES = {
