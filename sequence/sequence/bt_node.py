@@ -339,8 +339,8 @@ class BehaviorTreeNode(Node):
         self.gripper_subscriber = self.create_subscription(InputMsg, 'Robotiq2FGripperRobotInput', self.gripper_message_callback, 10)
  
         # Create the gripper open and close behaviors
-        # open_gripper = OpenGripper("Open griper", self)
-        # close_gripper = CloseGripper("Close griper", self)
+        open_gripper = OpenGripper("Open griper", self)
+        close_gripper = CloseGripper("Close griper", self)
         # create the MiR send mission behavior
         mir_mission_to_robot = MiRMission(self, "MiRMoveToRobot", "7eaa508b-2f02-11f0-befc-000129af97ab")
         mir_mission_from_robot = MiRMission(self, "MiRMoveFromRobot", "5c5e1739-2f02-11f0-befc-000129af97ab")
@@ -369,7 +369,7 @@ class BehaviorTreeNode(Node):
         # self.root = py_trees.composites.Sequence(name="Root", memory=True, children=[mir_mission_to_robot, close_gripper, mir_mission_from_robot, open_gripper])
         # self.root = py_trees.composites.Sequence(name="Root", memory=True, children=[mir_mission_from_robot, close_gripper, mir_mission_to_robot, open_gripper])
         # self.root = py_trees.composites.Sequence(name="Root", memory=True, children=[self.parallel_mir_to_pos, self.sequence_pick_pipe, self.parallel_mir_from_pos])
-        self.root = py_trees.composites.Sequence(name="Root", memory=True, children=[mir_mission_to_robot, robot_to_mir_pos, robot_close_grip_pos, robot_from_mir_pos, robot_to_pipe_pos, robot_open_grip_pos, robot_home_pos, mir_mission_from_robot])
+        self.root = py_trees.composites.Sequence(name="Root", memory=True, children=[mir_mission_to_robot, robot_to_mir_pos, robot_close_grip_pos, open_gripper, robot_from_mir_pos, robot_to_pipe_pos, robot_open_grip_pos, close_gripper, robot_home_pos, mir_mission_from_robot])
 
 
         # Build the behavior tree
