@@ -342,8 +342,8 @@ class BehaviorTreeNode(Node):
         open_gripper = OpenGripper("Open griper", self)
         close_gripper = CloseGripper("Close griper", self)
         # create the MiR send mission behavior
-        mir_mission_to_robot = MiRMission(self, "MiRMoveToRobot", "7eaa508b-2f02-11f0-befc-000129af97ab")
-        mir_mission_from_robot = MiRMission(self, "MiRMoveFromRobot", "5c5e1739-2f02-11f0-befc-000129af97ab")
+        mir_mission_to_robot = MiRMission(self, "MiRMoveToRobot", "ff1d7699-2f01-11f0-befc-000129af97ab")
+        mir_mission_from_robot = MiRMission(self, "MiRMoveFromRobot", "7eaa508b-2f02-11f0-befc-000129af97ab")
         # create the robot move behaviors
         robot_to_mir_pos = RobotMove('Robot move over MiR', self, trajectories.TRAJECTORIES['to_mir_pos'])
         robot_close_grip_pos = RobotMove('Robot grip position', self, trajectories.TRAJECTORIES['to_grip_close_pos'])
