@@ -6,9 +6,9 @@ def deg_to_rad(degrees:float) -> float:
 
 POSITIONS = {
     'home': [0.96866, -1.84237, 1.65405, -1.38090, -1.56853, -0.0],
-    'over_mir': [deg_to_rad(14.34), deg_to_rad(-27.33), deg_to_rad(57.76), deg_to_rad(-120.36), deg_to_rad(-89.93), deg_to_rad(-76.30)],
+    'over_mir': [deg_to_rad(17.17), deg_to_rad(-32.59), deg_to_rad(68.07), deg_to_rad(-125.46), deg_to_rad(-89.94), deg_to_rad(-71.52)],
     'over_pipe': [deg_to_rad(64.46), deg_to_rad(-66.17), deg_to_rad(71.15), deg_to_rad(-97.82), deg_to_rad(-88.56), deg_to_rad(-28.18)],
-    'pipe_grip': [deg_to_rad(14.34), deg_to_rad(-22.89), deg_to_rad(57.14), deg_to_rad(-124.18), deg_to_rad(-89.93), deg_to_rad(-76.30)],
+    'pipe_grip': [deg_to_rad(17.17), deg_to_rad(-27.45), deg_to_rad(67.48), deg_to_rad(-130.02), deg_to_rad(-89.94), deg_to_rad(-71.52)],
     'pipe_release': [deg_to_rad(65.46), deg_to_rad(-65.56), deg_to_rad(75.25), deg_to_rad(-102.53), deg_to_rad(-88.75), deg_to_rad(-28.18)],
 }
 
