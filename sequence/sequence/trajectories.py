@@ -1,14 +1,14 @@
 from builtin_interfaces.msg import Duration
 import math
 
-def deg_to_rad(degrees):
+def deg_to_rad(degrees:float) -> float:
     return degrees * (math.pi / 180.0)
 
 POSITIONS = {
     'home': [0.96866, -1.84237, 1.65405, -1.38090, -1.56853, -0.0],
-    'over_mir': [0.36634, -0.57037, 1.26938, -2.26788, -1.56905, -1.20951],
+    'over_mir': [deg_to_rad(14.34), deg_to_rad(-27.33), deg_to_rad(57.76), deg_to_rad(-120.36), deg_to_rad(-89.93), deg_to_rad(-76.30)],
     'over_pipe': [deg_to_rad(64.46), deg_to_rad(-66.17), deg_to_rad(71.15), deg_to_rad(-97.82), deg_to_rad(-88.56), deg_to_rad(-28.18)],
-    'pipe_grip': [0.36634, -0.51417, 1.26048, -2.31588, -1.56923, -1.20934],
+    'pipe_grip': [deg_to_rad(14.34), deg_to_rad(-22.89), deg_to_rad(57.14), deg_to_rad(-124.18), deg_to_rad(-89.93), deg_to_rad(-76.30)],
     'pipe_release': [deg_to_rad(65.46), deg_to_rad(-65.56), deg_to_rad(75.25), deg_to_rad(-102.53), deg_to_rad(-88.75), deg_to_rad(-28.18)],
 }
 
@@ -41,17 +41,17 @@ TRAJECTORIES = {
         {
             "positions": POSITIONS['home'],
             "velocities": [0, 0, 0, 0, 0, 0],
-            "time_from_start": Duration(sec=4, nanosec=0),
+            "time_from_start": Duration(sec=2, nanosec=0),
         },
         {
             "positions": [0.39968, -0.98419, 0.91211, -1.49889, -1.56940, -0.60895],
             "velocities": [0, 0, 0, 0, 0, 0],
-            "time_from_start": Duration(sec=8, nanosec=0),
+            "time_from_start": Duration(sec=4, nanosec=0),
         },
         {
             "positions": POSITIONS['over_mir'],
             "velocities": [0, 0, 0, 0, 0, 0],
-            "time_from_start": Duration(sec=12, nanosec=0),
+            "time_from_start": Duration(sec=6, nanosec=0),
         },
     ],
     'to_grip_close_pos':[
@@ -70,19 +70,19 @@ TRAJECTORIES = {
         {
             "positions": [0.39968, -0.98419, 0.91211, -1.49889, -1.56940, -0.60895],
             "velocities": [0, 0, 0, 0, 0, 0],
-            "time_from_start": Duration(sec=8, nanosec=0),
+            "time_from_start": Duration(sec=6, nanosec=0),
         },
         {
             "positions": POSITIONS['home'],
             "velocities": [0, 0, 0, 0, 0, 0],
-            "time_from_start": Duration(sec=12, nanosec=0),
+            "time_from_start": Duration(sec=8, nanosec=0),
         },
     ],
     'to_pipe_pos':[
         {
             "positions": POSITIONS['over_pipe'],
             "velocities": [0, 0, 0, 0, 0, 0],
-            "time_from_start": Duration(sec=4, nanosec=0),
+            "time_from_start": Duration(sec=2, nanosec=0),
         },
     ],
     'to_grip_open_pos':[
@@ -101,7 +101,7 @@ TRAJECTORIES = {
         {
             "positions": POSITIONS['home'],
             "velocities": [0, 0, 0, 0, 0, 0],
-            "time_from_start": Duration(sec=8, nanosec=0),
+            "time_from_start": Duration(sec=6, nanosec=0),
         },
     ],
 }

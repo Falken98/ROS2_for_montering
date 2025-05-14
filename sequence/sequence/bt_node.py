@@ -41,7 +41,7 @@ class OpenGripper(py_trees.behaviour.Behaviour):
         msg = OutputMsg()
         msg.r_pr = 0
         msg.r_sp = 255
-        msg.r_fr = 64
+        msg.r_fr = 32
         self.gripper_publisher.publish(msg)
         self.node.get_logger().info("Gripper open command sent")
         
@@ -55,7 +55,7 @@ class OpenGripper(py_trees.behaviour.Behaviour):
             # If the gripper is not open after the duration, return failure
             self.node.get_logger().info("Gripper is could not be opened")
             return py_trees.common.Status.FAILURE
-        elif self.blackboard.griper.position <= 10 and self.blackboard.griper.moving != 0:
+        elif self.blackboard.griper.position <= 32 and self.blackboard.griper.moving != 0:
             # If the gripper is open, return success
             self.node.get_logger().info("Gripper is open")
             return py_trees.common.Status.SUCCESS
