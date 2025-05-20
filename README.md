@@ -18,6 +18,7 @@ The `robot_prosjekt` package is designed to provide functionality for a robotic 
     ```
     cd ~/ros2_ws/src
     git clone <repository_url>
+    rosdep update && rosdep install --ignore-src --from-paths src -y
     ```
 2. Build the workspace:
     ```
